@@ -29,3 +29,15 @@ class SubReddit(models.Model):
 
     def __str__(self):
         return  self.sub_name
+
+
+# class TwitterAccounts(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+
+# class FacebookAccounts(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+
+# class FacebookForums(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
