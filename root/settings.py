@@ -1,4 +1,5 @@
 import os
+import environ
 from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
@@ -14,6 +15,9 @@ if ENVIRONMENT == 'development':
 else:
     DEBUG = False
 
+env = environ.Env()
+
+environ.Env.read_env()
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
@@ -63,11 +67,10 @@ WSGI_APPLICATION = 'root.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': env.db('DATABASE_URL', default='postgresql:///:memory:'),
 }
+
+DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 
 
 # Password validation
