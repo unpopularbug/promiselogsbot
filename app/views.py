@@ -8,7 +8,7 @@ class GetData(views.APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
-        api_endpoint = f"{settings.BASE_URL}/national-assembly/members/"
+        api_endpoint = f"{settings.BASE_URL}/national_assembly/members/"
 
         try:
             response = requests.get(api_endpoint, verify=False)
