@@ -4,6 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
+from celery.schedules import crontab
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -123,3 +125,18 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Africa/Nairobi'
 
 BASE_URL = os.getenv('BASE_URL')
+
+# CELERY_BEAT_SCHEDULE = {
+#     'run_bot_morning': {
+#         'task': 'scripts.tasks.run_bot',
+#         'schedule': crontab(hour=8, minute=0),
+#     },
+#     'run_bot_afternoon': {
+#         'task': 'scripts.tasks.run_bot',
+#         'schedule': crontab(hour=13, minute=0),
+#     },
+#     'run_bot_evening': {
+#         'task': 'scripts.tasks.run_bot',
+#         'schedule': crontab(hour=18, minute=0),
+#     },
+# }
