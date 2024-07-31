@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  redis:
+    image: 'redis:alpine'
+
+  web:
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/images
+      - ./_static:/app/_static
+    env_file:
+      - .env
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/images
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
+volumes:
+  static_volume:
+  media_volume:
