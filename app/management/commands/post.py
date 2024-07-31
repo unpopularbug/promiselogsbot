@@ -34,8 +34,16 @@ def reddit_post():
                 phone_number = member.get("tel")
 
                 if name and constituency:
-                    title = f"{name} - {constituency}"
-                    message = f"Phone Number: {phone_number}"
+                    title = "Request to test a bot service in development in the r/Nairobi sub."
+                    message = """Hello! 
+                    
+                    We're testing a service that will be posting data from the publicly available Promiselogs API containing data related to members of parliament, their promises, among other data.
+                    We're hoping we will be able to roll out the bot on Twitter and Facebook soon. Besides posting this data, the service will also allow people to comment with specific keywords like a name of an Mpig, and will reply with relevant data.
+                    This is an open-source project we are building in a bid to create awareness as well as keep the fight alive till the next elections. We think that many will have forgotten all the false promises, insults and corruption in the gov't.
+                    This data is not limited to members of parliament alone.
+                    You can visit the project I am building the bot on at https://promiselogs.org
+                    
+                    Regards, Brian"""
 
                     print(f"Title: {title}")
                     print(f"Message: {message}")
