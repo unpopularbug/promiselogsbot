@@ -11,16 +11,16 @@ from app.models import RedditAccounts, SubReddit
 
 django.setup()
 
-API_URL = f"{settings.API_URL}/national-assembly/members/"
+api_url = f"{settings.BASE_URL}/national_assembly/members/"
 
 @shared_task()
 def reddit_post():
     accounts = RedditAccounts.objects.all()
     subreddits = SubReddit.objects.all()
 
-    response = requests.get(API_URL)
+    response = requests.get(api_url)
     if response.status_code != 200:
-        print(f"Failed to fetch data from API: {response.status_code}")
+        print(f"Failed to fetch data from the promiselogs API: {response.status_code}")
         return
 
     data = response.json()
@@ -30,16 +30,24 @@ def reddit_post():
         for subreddit_obj in subreddits:
             for member in members:
                 name = member.get("name")
-                constituency = member.get("constituency")
-                phone_number = member.get("phone_number")
+                constituency = member.get("represents")
+                phone_number = member.get("tel")
 
                 if name and constituency:
-                    title = f"{name} - {constituency}"
-                    message = f"Phone Number: {phone_number}"
+                    title = "Request to test a bot service in development in the r/Nairobi sub."
+                    message = """Hello! 
+                    
+                    We're testing a service that will be posting data from the publicly available Promiselogs API containing data related to members of parliament, their promises, among other data.
+                    We're hoping we will be able to roll out the bot on Twitter and Facebook soon. Besides posting this data, the service will also allow people to comment with specific keywords like a name of an Mpig, and will reply with relevant data.
+                    This is an open-source project we are building in a bid to create awareness as well as keep the fight alive till the next elections. We think that many will have forgotten all the false promises, insults and corruption in the gov't.
+                    This data is not limited to members of parliament alone.
+                    You can visit the project I am building the bot on at https://promiselogs.org
+                    
+                    Regards, Brian"""
 
                     print(f"Title: {title}")
                     print(f"Message: {message}")
-                    # post_on_reddit(account, subreddit_obj, title, message)
+                    post_on_reddit(account, subreddit_obj, title, message)
 
 
 def post_on_reddit(account, subreddit_obj, title, message):
