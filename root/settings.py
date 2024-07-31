@@ -126,17 +126,17 @@ CELERY_TIMEZONE = 'Africa/Nairobi'
 
 BASE_URL = os.getenv('BASE_URL')
 
-# CELERY_BEAT_SCHEDULE = {
-#     'run_bot_morning': {
-#         'task': 'scripts.tasks.run_bot',
-#         'schedule': crontab(hour=8, minute=0),
-#     },
-#     'run_bot_afternoon': {
-#         'task': 'scripts.tasks.run_bot',
-#         'schedule': crontab(hour=13, minute=0),
-#     },
-#     'run_bot_evening': {
-#         'task': 'scripts.tasks.run_bot',
-#         'schedule': crontab(hour=18, minute=0),
-#     },
-# }
+CELERY_BEAT_SCHEDULE = {
+    'run_bot_morning': {
+        'task': 'app.tasks.run_reddit_bot',
+        'schedule': crontab(hour=8, minute=0),
+    },
+    'run_bot_afternoon': {
+        'task': 'app.tasks.run_reddit_bot',
+        'schedule': crontab(hour=13, minute=0),
+    },
+    'run_bot_evening': {
+        'task': 'app.tasks.run_reddit_bot',
+        'schedule': crontab(hour=18, minute=0),
+    },
+}
