@@ -11,16 +11,16 @@ from app.models import RedditAccounts, SubReddit
 
 django.setup()
 
-API_URL = f"{settings.API_URL}/national-assembly/members/"
+api_url = f"{settings.BASE_URL}/national_assembly/members/"
 
 @shared_task()
 def reddit_post():
     accounts = RedditAccounts.objects.all()
     subreddits = SubReddit.objects.all()
 
-    response = requests.get(API_URL)
+    response = requests.get(api_url)
     if response.status_code != 200:
-        print(f"Failed to fetch data from API: {response.status_code}")
+        print(f"Failed to fetch data from the promiselogs API: {response.status_code}")
         return
 
     data = response.json()
@@ -30,8 +30,8 @@ def reddit_post():
         for subreddit_obj in subreddits:
             for member in members:
                 name = member.get("name")
-                constituency = member.get("constituency")
-                phone_number = member.get("phone_number")
+                constituency = member.get("represents")
+                phone_number = member.get("tel")
 
                 if name and constituency:
                     title = f"{name} - {constituency}"
@@ -39,7 +39,7 @@ def reddit_post():
 
                     print(f"Title: {title}")
                     print(f"Message: {message}")
-                    # post_on_reddit(account, subreddit_obj, title, message)
+                    post_on_reddit(account, subreddit_obj, title, message)
 
 
 def post_on_reddit(account, subreddit_obj, title, message):
