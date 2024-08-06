@@ -13,8 +13,37 @@ django.setup()
 
 api_url = f"{settings.BASE_URL}/national_assembly/members/"
 
+# @shared_task
+# def reddit_post():
+#     try:
+#         response = requests.get(api_url)
+#         response.raise_for_status()
+#         data = response.json()
+#     except requests.exceptions.RequestException as e:
+#         print(f"Failed to fetch data from the promiselogs API: {e}")
+#         return
+#
+#     members = data.get("members", [])
+#
+#     accounts = RedditAccounts.objects.all()
+#     subreddits = SubReddit.objects.all()
+#
+#     for account in accounts:
+#         for subreddit_obj in subreddits:
+#             for member in members:
+#                 name = member.get("name")
+#                 constituency = member.get("represents")
+#                 phone_number = member.get("tel")
+#
+#                 if name and constituency:
+#                     title = f"{name} - {constituency}"
+#                     message = f"Phone Number: {phone_number}"
+#
+#                     print(f"Title: {title}")
+#                     print(f"Message: {message}")
+
 @shared_task
-def reddit_post():
+def reddit_post_direct():
     try:
         response = requests.get(api_url)
         response.raise_for_status()
@@ -22,25 +51,24 @@ def reddit_post():
     except requests.exceptions.RequestException as e:
         print(f"Failed to fetch data from the promiselogs API: {e}")
         return
-    
-    members = data.get("members", [])
 
+    members = data.get("members", [])
     accounts = RedditAccounts.objects.all()
-    subreddits = SubReddit.objects.all()
 
     for account in accounts:
-        for subreddit_obj in subreddits:
-            for member in members:
-                name = member.get("name")
-                constituency = member.get("represents")
-                phone_number = member.get("tel")
+        for member in members:
+            name = member.get("name")
+            constituency = member.get("represents")
+            phone_number = member.get("tel")
 
-                if name and constituency:
-                    title = f"{name} - {constituency}"
-                    message = f"Phone Number: {phone_number}"
+            if name and constituency:
+                title = f"{name} - {constituency}"
+                message = f"Phone Number: {phone_number}"
 
-                    print(f"Title: {title}")
-                    print(f"Message: {message}")
+                print(f"Title: {title}")
+                print(f"Message: {message}")
+
+                post_on_reddit_profile(account, title, message)
 
 
 def post_on_reddit(account, subreddit_obj, title, message):
@@ -61,6 +89,20 @@ def post_on_reddit(account, subreddit_obj, title, message):
     except Exception as e:
         print(f"Failed to post in r/{subreddit_obj.sub_name} using account {account.acc_username}: {e}")
 
+def post_on_reddit_profile(account, title, message):
+    try:
+        reddit_instance = get_reddit_instance(account)
+
+        # Post directly to the Reddit profile
+        submission = reddit_instance.subreddit("u_" + account.acc_username).submit(
+            title=title,
+            selftext=message
+        )
+        print(f"Posted to user profile u/{account.acc_username} using account {account.acc_username}")
+        time.sleep(10)
+
+    except Exception as e:
+        print(f"Failed to post to user profile u/{account.acc_username} using account {account.acc_username}: {e}")
 
 def get_reddit_instance(account):
     return praw.Reddit(
@@ -72,17 +114,24 @@ def get_reddit_instance(account):
     )
 
 
-def get_flair_id(reddit_instance, subreddit_name, flair_name):
-    subreddit = reddit_instance.subreddit(subreddit_name)
-    flairs = {flair['text']: flair['id'] for flair in subreddit.flair.link_templates}
-    flair_id = flairs.get(flair_name)
-    if flair_id is None:
-        raise ValueError(f"Flair '{flair_name}' not found in subreddit {subreddit_name}")
-    return flair_id
-
-
 class Command(BaseCommand):
-    help = 'Post to Reddit'
+    help = 'Post to Reddit Profile'
 
     def handle(self, *args, **options):
-        reddit_post.delay()
+        reddit_post_direct.delay()
+
+
+# def get_flair_id(reddit_instance, subreddit_name, flair_name):
+#     subreddit = reddit_instance.subreddit(subreddit_name)
+#     flairs = {flair['text']: flair['id'] for flair in subreddit.flair.link_templates}
+#     flair_id = flairs.get(flair_name)
+#     if flair_id is None:
+#         raise ValueError(f"Flair '{flair_name}' not found in subreddit {subreddit_name}")
+#     return flair_id
+#
+#
+# class Command(BaseCommand):
+#     help = 'Post to Reddit'
+#
+#     def handle(self, *args, **options):
+#         reddit_post.delay()
