@@ -13,41 +13,62 @@ django.setup()
 
 api_url = f"{settings.BASE_URL}/national_assembly/members/"
 
-@shared_task()
-def reddit_post():
-    accounts = RedditAccounts.objects.all()
-    subreddits = SubReddit.objects.all()
+# @shared_task
+# def reddit_post():
+#     try:
+#         response = requests.get(api_url)
+#         response.raise_for_status()
+#         data = response.json()
+#     except requests.exceptions.RequestException as e:
+#         print(f"Failed to fetch data from the promiselogs API: {e}")
+#         return
+#
+#     members = data.get("members", [])
+#
+#     accounts = RedditAccounts.objects.all()
+#     subreddits = SubReddit.objects.all()
+#
+#     for account in accounts:
+#         for subreddit_obj in subreddits:
+#             for member in members:
+#                 name = member.get("name")
+#                 constituency = member.get("represents")
+#                 phone_number = member.get("tel")
+#
+#                 if name and constituency:
+#                     title = f"{name} - {constituency}"
+#                     message = f"Phone Number: {phone_number}"
+#
+#                     print(f"Title: {title}")
+#                     print(f"Message: {message}")
 
-    response = requests.get(api_url)
-    if response.status_code != 200:
-        print(f"Failed to fetch data from the promiselogs API: {response.status_code}")
+@shared_task
+def reddit_post_direct():
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()
+        data = response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to fetch data from the promiselogs API: {e}")
         return
 
-    data = response.json()
     members = data.get("members", [])
+    accounts = RedditAccounts.objects.all()
 
     for account in accounts:
-        for subreddit_obj in subreddits:
-            for member in members:
-                name = member.get("name")
-                constituency = member.get("represents")
-                phone_number = member.get("tel")
+        for member in members:
+            name = member.get("name")
+            constituency = member.get("represents")
+            phone_number = member.get("tel")
 
-                if name and constituency:
-                    title = "Request to test a bot service in development in the r/Nairobi sub."
-                    message = """Hello! 
-                    
-                    We're testing a service that will be posting data from the publicly available Promiselogs API containing data related to members of parliament, their promises, among other data.
-                    We're hoping we will be able to roll out the bot on Twitter and Facebook soon. Besides posting this data, the service will also allow people to comment with specific keywords like a name of an Mpig, and will reply with relevant data.
-                    This is an open-source project we are building in a bid to create awareness as well as keep the fight alive till the next elections. We think that many will have forgotten all the false promises, insults and corruption in the gov't.
-                    This data is not limited to members of parliament alone.
-                    You can visit the project I am building the bot on at https://promiselogs.org
-                    
-                    Regards, Brian"""
+            if name and constituency:
+                title = f"{name} - {constituency}"
+                message = f"Phone Number: {phone_number}"
 
-                    print(f"Title: {title}")
-                    print(f"Message: {message}")
-                    post_on_reddit(account, subreddit_obj, title, message)
+                print(f"Title: {title}")
+                print(f"Message: {message}")
+
+                post_on_reddit_profile(account, title, message)
 
 
 def post_on_reddit(account, subreddit_obj, title, message):
@@ -68,6 +89,20 @@ def post_on_reddit(account, subreddit_obj, title, message):
     except Exception as e:
         print(f"Failed to post in r/{subreddit_obj.sub_name} using account {account.acc_username}: {e}")
 
+def post_on_reddit_profile(account, title, message):
+    try:
+        reddit_instance = get_reddit_instance(account)
+
+        # Post directly to the Reddit profile
+        submission = reddit_instance.subreddit("u_" + account.acc_username).submit(
+            title=title,
+            selftext=message
+        )
+        print(f"Posted to user profile u/{account.acc_username} using account {account.acc_username}")
+        time.sleep(10)
+
+    except Exception as e:
+        print(f"Failed to post to user profile u/{account.acc_username} using account {account.acc_username}: {e}")
 
 def get_reddit_instance(account):
     return praw.Reddit(
@@ -79,17 +114,24 @@ def get_reddit_instance(account):
     )
 
 
-def get_flair_id(reddit_instance, subreddit_name, flair_name):
-    subreddit = reddit_instance.subreddit(subreddit_name)
-    flairs = {flair['text']: flair['id'] for flair in subreddit.flair.link_templates}
-    flair_id = flairs.get(flair_name)
-    if flair_id is None:
-        raise ValueError(f"Flair '{flair_name}' not found in subreddit {subreddit_name}")
-    return flair_id
-
-
 class Command(BaseCommand):
-    help = 'Post to Reddit'
+    help = 'Post to Reddit Profile'
 
     def handle(self, *args, **options):
-        reddit_post.delay()
+        reddit_post_direct.delay()
+
+
+# def get_flair_id(reddit_instance, subreddit_name, flair_name):
+#     subreddit = reddit_instance.subreddit(subreddit_name)
+#     flairs = {flair['text']: flair['id'] for flair in subreddit.flair.link_templates}
+#     flair_id = flairs.get(flair_name)
+#     if flair_id is None:
+#         raise ValueError(f"Flair '{flair_name}' not found in subreddit {subreddit_name}")
+#     return flair_id
+#
+#
+# class Command(BaseCommand):
+#     help = 'Post to Reddit'
+#
+#     def handle(self, *args, **options):
+#         reddit_post.delay()
